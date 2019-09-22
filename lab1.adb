@@ -1,0 +1,43 @@
+with Ada.Calendar;
+with Ada.Text_IO;
+use Ada.Calendar;
+use Ada.Text_IO;
+
+procedure Cyclic is
+   Message: constant String := "Cyclic scheduler";
+   -- change/add your declarations here
+   D: Duration := 1.0;
+   Start_Time: Time := Clock;
+   S: Integer := 0;
+   
+   
+   procedure F1 is 
+      Message: constant String := "f1 executing, time is now";
+   begin
+      Put(Message);
+      Put_Line(Duration'Image(Clock - Start_Time));
+   end F1;
+   
+   procedure F2 is 
+      Message: constant String := "f2 executing, time is now";
+   begin
+      Put(Message);
+      Put_Line(Duration'Image(Clock - Start_Time));
+   end F2;
+   
+   procedure F3 is 
+      Message: constant String := "f3 executing, time is now";
+   begin
+      Put(Message);
+      Put_Line(Duration'Image(Clock - Start_Time));
+   end F3;
+   
+begin
+   loop
+      -- change/add your code inside this loop   
+      F1;
+      F2;
+      F3;
+      delay D;
+   end loop;
+   end Cyclic;
