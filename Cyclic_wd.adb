@@ -15,10 +15,11 @@ procedure Cyclic_wd is
    T : Time := Clock;
    Tx : Time := Clock;
    
+
    procedure F1 is
       Message: constant String := "f1 executing, time is now";  
    begin
-      T := Clock;
+      T := T+1.0;
       Put(Message);
       Put_Line(Duration'Image(Clock - Start_Time));
    end F1;
@@ -34,7 +35,7 @@ procedure Cyclic_wd is
       Message: constant String := "f3 executing, time is now";
       X: Float;
       G: Generator;
-      D3: Duration:= 0.5;
+      D3: Duration:=0.5;
    begin
       Reset(G);
       Put(Message);
@@ -62,33 +63,42 @@ procedure Cyclic_wd is
 	 -- add your task code inside here
 	 accept Check(Twd : in Time) do
 	    Twd1 := Twd;  -- T=>>Twd1
-	    
+	   --  Put_Line(Duration'Image(T - Start_time));
 	    if (Clock-Twd1) > 1.0 then
 	       Put_line("Warning!");
 	      delay until Clock;    
        
-      else
-	 delay until Twd1+1.0;
+                else
+	         delay until Twd1+1.0;
 	    end if;
 	    end Check;
          accept Rset(Twd2 : out Time) do
 	    Twd2 := Twd1; -- Tw1d:=T =>>T
+	   -- Put_Line(Duration'Image(T - Start_time));
 	    end Rset;
       end loop;
       end Watchdog;
   
    
 begin
-   
-   loop
+
+      loop
       -- change/add your code inside this loop     
-      F1;
-      F2;
-      delay until T+0.5;
+	 F1;
+     --Put_Line(Duration'Image(T - Start_time));
+	 
+         F2;
+    -- Put_Line(Duration'Image(T - Start_time));
+
+      delay until T+0.5; 
       F3;
+     -- Put_Line(Duration'Image(T - Start_time));
+
       Watchdog.Check(T);
       Watchdog.Rset(T);
+      --Put_Line(Duration'Image(T - Start_time));
       F1;
+      -- Put_Line(Duration'Image(T - Start_time));
       F2;
       delay until T+1.0;
    end loop;
