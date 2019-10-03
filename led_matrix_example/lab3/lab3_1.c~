@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+#include "led_matrix.h"
+
+int main() {
+
+  pid_t pid = fork();
+
+  int rowp = 1;
+  int rowc = 4;
+  int colp = 1;
+  int colc = 4;
+  
+  open_led_matrix();
+  clear_leds();
+  
+  if (pid < 0){
+    perror("Could not fork new process");
+    return -1;
+  }
+
+  if (pid ==0){
+    set_led(rowc,colc,RGB565_RED);
+    printf("I'm the child! Lighting LED at (%d,%d)\n",rowc,colc);
+  }else {
+    set_led(rowp,colp,RGB565_BLUE);
+    printf("I'm the parent of process %d!  Lighting LED at(%d, %d)\n", pid,rowp,colp);
+  }
+
+  return 0;
+  usleep(20000000);
+  clear_leds();
+  close_led_matrix();
+}
