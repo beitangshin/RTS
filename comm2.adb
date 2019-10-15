@@ -9,12 +9,13 @@ use Ada.Text_IO;
 procedure comm2 is
 
     Message: constant String := "Protected Object";
-    NumbElems : constant :=9;
-    type BufferArray is array (0 .. NumbElems) of Integer;
+    NumbElems : constant :=10;
+    Add: Integer :=0;
+    type BufferArray is array (1 .. NumbElems) of Integer;
         -- protected object declaration
     protected  buffer is
-        entry PutIn (X: in  integer);
-        entry Retrieve (X: out integer);
+        entry PutIn (value: in  integer);
+        entry Retrieve (output: out integer);
             -- add entries of protected object here
     private
         Buffers : BufferArray;
@@ -32,20 +33,21 @@ procedure comm2 is
     end consumer;
 
     protected body buffer is
-        entry PutIn (X: in  integer) when CurrentSize < NumbElems is
+       
+        entry PutIn (value: in  integer) when CurrentSize < NumbElems is
             begin
-                Buffers (Next_in) := X;
+                Buffers (Next_in) := value;
                 Next_in := (Next_in mod NumbElems) + 1;
                 CurrentSize := CurrentSize + 1;
         end PutIn;
 
-        entry Retrieve (X: out integer) when CurrentSize > 0 is
+        entry Retrieve (output: out integer) when CurrentSize > 0 is
             begin
-                X := Buffers (Next_out);
+                output := Buffers (Next_out);
                 Next_out := (Next_out mod NumbElems) + 1;
                 CurrentSize := CurrentSize - 1;
         end Retrieve;
-              -- add definitions of protected entries here
+      
     end buffer;
 
         task body producer is
@@ -61,13 +63,17 @@ procedure comm2 is
 
         Put_Line(Message);
         loop
-            reset(G);
+         if Add<100 then
+            Reset(G);
             N := Random(G);
-            buffer.PutIn(N);
+            Buffer.PutIn(N);
             Put_Line(MessageP);
             Put_Line(Integer'Image(N));
-        end loop;
-
+        elsif Add>=100 then
+           Put_Line("Ending the Producer..");
+           exit;
+        end if;
+       end loop;
     end producer;
 
     task body consumer is
@@ -75,7 +81,7 @@ procedure comm2 is
                 -- add local declrations of task here
         MessageR: constant String := "consumer retrieved";
         RetrievedNumber : Integer;
-        Add: Integer :=0;
+        
                  --change/add your local declarations here
     begin
 
@@ -95,3 +101,4 @@ procedure comm2 is
 begin
 Put_Line(Message);
 end comm2;
+
