@@ -17,12 +17,15 @@ procedure Comm1 is
    task Buffer is
       entry PutIn(Value : in Integer) ;
       entry Retrieve (Output: out Integer);
+      entry Bstop;
    end Buffer;
    
    task Producer is
+      entry Putstart;
    end Producer;
    
    task Consumer is
+     -- entry Cstop(Stf:out Integer );
    end Consumer;
    
    task body Buffer is
@@ -32,37 +35,50 @@ procedure Comm1 is
       CurrentSize : Integer range 0.. NumbElems :=0;
       Buffers: BufferArray;
       Next_In, Next_Out : Integer range 1..NumbElems := 1;
-      
-      
+      StopB:Integer:=0;
    begin
       Put_Line(Message);
       
       
-    --accept StartBuffer(StartB: in Integer) do
-    loop
-     if Add<100 then
-         select
-         when CurrentSize < NumbElems =>
-           accept PutIn(Value : in Integer) do
-          Buffers (Next_In) := Value;
-          Next_In := (Next_In mod NumbElems) + 1;
-          CurrentSize := CurrentSize + 1;
-           end PutIn;
-         or
-         when CurrentSize>0 =>
-           accept Retrieve(Output: out Integer) do
-          Output:= Buffers (Next_Out);
-          Next_Out := (Next_Out mod NumbElems) + 1;
-          CurrentSize := CurrentSize - 1;
-           end Retrieve;
-         end select;
-    elsif Add>=100 then
-            Put_Line("Ending Buffer...");
-            exit;
-        end if;
-     end loop;
-
-     
+      --accept StartBuffer(StartB: in Integer) do
+      
+	 
+      --if Add<100 then
+      
+     if StopB=0 then
+	loop
+	 select
+	    --when CurrentSize < NumbElems =>
+	       
+	       accept PutIn(Value : in Integer) do
+		  Buffers (Next_In) := Value;
+		  Next_In := (Next_In mod NumbElems) + 1;
+		  CurrentSize := CurrentSize + 1;
+	       end PutIn;
+	       
+	       
+	 or
+	    --when CurrentSize>0 =>
+	       
+	       accept Retrieve(Output: out Integer) do
+		  Output:= Buffers (Next_Out);
+		  Next_Out := (Next_Out mod NumbElems) + 1;
+		  CurrentSize := CurrentSize - 1;
+	       end Retrieve;
+	 or accept Bstop do
+	    StopB:=1;
+	    end Bstop;
+	 end select;
+	 end loop;
+	end if; 
+	 -- elsif Add>=100 then
+	 
+	 -- exit;
+	 --   end if;
+	 Put_Line("Ending the consumer");
+	 
+	 
+	 
    end Buffer;
    
    
@@ -77,43 +93,62 @@ procedure Comm1 is
    begin
       
       Put_Line(Message);
+      --if Add<100 then
       loop
-        if Add<100 then
-            Reset(G);
-            N := Random(G);
-            Buffer.PutIn(N);
-            Put_Line(MessageP);
-            Put_Line(Integer'Image(N));
-        elsif Add>=100 then
-           Put_Line("Ending the Producer..");
-           exit;
-        end if;
-       end loop;
+	 accept Putstart do
+	    Reset(G);
+	    N := Random(G);
+	    Buffer.PutIn(N);
+	    Put_Line(MessageP);
+	    Put_Line(Integer'Image(N));
+	 end Putstart;
+
+      end loop;  
+      -- elsif Add>=100 then
+	 
+	 --  exit;
+	 --end if;
+	 
    end Producer;
-   
    
    task body Consumer is
       Message: constant String := "consumer executing";
       MessageR: constant String := "consumer retrieved";
       RetrievedNumber : Integer;
-     
+      Stf:Integer:=0;
    begin
       
       Put_Line(Message);
-      
-    Main_Cycle:
-     loop
-        Buffer.Retrieve(RetrievedNumber);
-        Add := Add+RetrievedNumber;
-        Put_Line(MessageR);
-        Put_Line(Integer'Image(RetrievedNumber));
-        Put_Line("Add");
-        Put_Line(Integer'Image(Add));
-    end loop Main_Cycle;
+     
+  Main_Cycle:
+      -- if Add<=100 then
+    
+	 loop
+	  if Add<= 100 then
+	    Producer.Putstart;
+	    Buffer.Retrieve(RetrievedNumber);
+	    Add := Add+RetrievedNumber;
+	    Put_Line(MessageR);
+	    Put_Line(Integer'Image(RetrievedNumber));
+	    Put_Line("Add");
+	    Put_Line(Integer'Image(Add));
+	   end if;
+	    Buffer.Bstop;
+	    Producer.Putstart;
+	    	
+	 
+
+	  --end if; 
+	 end loop Main_Cycle;
+  exception
+--   when TASKING_ERROR =>
+     when others =>
+     Put_Line("Buffer finished before producer");
+	 Put_Line("Ending the consumer");
+
+	 
    end Consumer;
-   
 begin
    Put_Line(Message);
-end Comm1;
-  
-
+   
+   end Comm1;
