@@ -10,7 +10,7 @@ procedure comm2 is
 
     Message: constant String := "Protected Object";
     NumbElems : constant :=10;
-    Add: Integer :=0;
+   
     type BufferArray is array (1 .. NumbElems) of Integer;
         -- protected object declaration
     protected  buffer is
@@ -21,33 +21,37 @@ procedure comm2 is
         Buffers : BufferArray;
         Next_in, Next_out : integer range 1..NumbElems := 1;
         CurrentSize : integer range 0..NumbElems := 0;
+        Signal: Boolean:=True;
             -- add local declarations
     end buffer;
 
     task producer is
+       entry PPstart;
+      entry Pstop;
         -- add task entries
     end producer;
-
+ 
     task consumer is
-                -- add task entries
     end consumer;
 
     protected body buffer is
-       
-        entry PutIn (value: in  integer) when CurrentSize < NumbElems is
+     
+        entry PutIn (value: in  integer) when Signal is
             begin
                 Buffers (Next_in) := value;
                 Next_in := (Next_in mod NumbElems) + 1;
                 CurrentSize := CurrentSize + 1;
+		Signal:=False;
         end PutIn;
 
-        entry Retrieve (output: out integer) when CurrentSize > 0 is
+        entry Retrieve (output: out integer) when not Signal is
             begin
                 output := Buffers (Next_out);
                 Next_out := (Next_out mod NumbElems) + 1;
                 CurrentSize := CurrentSize - 1;
+		Signal:= True;
         end Retrieve;
-      
+     
     end buffer;
 
         task body producer is
@@ -58,22 +62,33 @@ procedure comm2 is
           use Random_Int;
           G : Generator;
           N: Integer;
+	  StopP: Boolean :=True ;
                 -- change/add your local declarations here
     begin
 
-        Put_Line(Message);
+       Put_Line(Message);
+     
         loop
-         if Add<100 then
+	   select
+            accept PPstart do
             Reset(G);
             N := Random(G);
             Buffer.PutIn(N);
             Put_Line(MessageP);
             Put_Line(Integer'Image(N));
-        elsif Add>=100 then
+	    end PPstart;
+	   or 
+	      accept Pstop do
+		 StopP:=False;
+		
+	      end Pstop;
+	   end select;
+	   exit when not StopP;
+        end loop;
+      
+       
            Put_Line("Ending the Producer..");
-           exit;
-        end if;
-       end loop;
+           
     end producer;
 
     task body consumer is
@@ -81,22 +96,31 @@ procedure comm2 is
                 -- add local declrations of task here
         MessageR: constant String := "consumer retrieved";
         RetrievedNumber : Integer;
-        
+        Add: Integer :=0; 
                  --change/add your local declarations here
     begin
 
         Put_Line(Message);
         Main_Cycle:
             loop
-            if Add<=100 then
+	   if Add<= 100 then
+	    Producer.PPstart;
             buffer.Retrieve(RetrievedNumber);
             Add := Add+RetrievedNumber;
+	     Put_Line("Add");
+	     Put_Line(Integer'Image(Add));
             Put_Line(MessageR);
             Put_Line(Integer'Image(RetrievedNumber));
-            end if;
+	       end if;
+	     
+		exit when Add>100;
+		
             end loop Main_Cycle;
-            Put_Line("Ending the consumer");
-    end consumer;
+       
+	    Producer.Pstop;
+          Put_Line("Ending the consumer");
+       
+	end Consumer;
 
 begin
 Put_Line(Message);
