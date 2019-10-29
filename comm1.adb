@@ -1,3 +1,4 @@
+
 --Chen Yang, Lianqiao xiao group 18
 --Process commnication: Ada lab part 3
 --revised now the program will stop when the sum is over 100
@@ -17,11 +18,11 @@ procedure Comm1 is
    task Buffer is
       entry PutIn(Value : in Integer) ;
       entry Retrieve (Output: out Integer);
-      entry Bstop;
+
    end Buffer;
    
    task Producer is
-      entry Putstart;
+      entry Pstop;
    end Producer;
    
    task Consumer is
@@ -35,21 +36,17 @@ procedure Comm1 is
       CurrentSize : Integer range 0.. NumbElems :=0;
       Buffers: BufferArray;
       Next_In, Next_Out : Integer range 1..NumbElems := 1;
-      StopB:Integer:=0;
+  
+
    begin
       Put_Line(Message);
       
+     
       
-      --accept StartBuffer(StartB: in Integer) do
-      
-	 
-      --if Add<100 then
-      
-     if StopB=0 then
+   
 	loop
 	 select
-	    --when CurrentSize < NumbElems =>
-	       
+	       when CurrentSize < NumbElems =>
 	       accept PutIn(Value : in Integer) do
 		  Buffers (Next_In) := Value;
 		  Next_In := (Next_In mod NumbElems) + 1;
@@ -58,28 +55,16 @@ procedure Comm1 is
 	       
 	       
 	 or
-	    --when CurrentSize>0 =>
-	       
+	      when CurrentSize >0 =>
 	       accept Retrieve(Output: out Integer) do
 		  Output:= Buffers (Next_Out);
 		  Next_Out := (Next_Out mod NumbElems) + 1;
 		  CurrentSize := CurrentSize - 1;
 	       end Retrieve;
-	 or accept Bstop do
-	    StopB:=1;
-	    end Bstop;
+	       
 	 end select;
 	 end loop;
-	end if; 
-	 -- elsif Add>=100 then
-	 
-	 -- exit;
-	 --   end if;
-	 Put_Line("Ending the consumer");
-	 
-	 
-	 
-   end Buffer;
+	 end Buffer;
    
    
    task body Producer is
@@ -90,59 +75,54 @@ procedure Comm1 is
       use Random_Int;
       G : Generator;
       N: Integer;
+      Stopp :boolean:= False;
    begin
       
       Put_Line(Message);
-      --if Add<100 then
       loop
-	 accept Putstart do
-	    Reset(G);
-	    N := Random(G);
-	    Buffer.PutIn(N);
-	    Put_Line(MessageP);
-	    Put_Line(Integer'Image(N));
-	 end Putstart;
-
-      end loop;  
-      -- elsif Add>=100 then
-	 
-	 --  exit;
-	 --end if;
-	 
+      
+	    select
+          accept Pstop do
+          Stopp:= True;
+          end Pstop;
+        or 
+           delay 0.5;
+           Reset(G);
+	       N := Random(G);
+	       Buffer.PutIn(N);
+	       Put_Line(MessageP);
+	       Put_Line(Integer'Image(N));
+         end select;
+          exit when stopp;
+      end loop; 
    end Producer;
    
    task body Consumer is
       Message: constant String := "consumer executing";
       MessageR: constant String := "consumer retrieved";
       RetrievedNumber : Integer;
-      Stf:Integer:=0;
+     -- Stf:Integer:=0;
    begin
       
       Put_Line(Message);
      
   Main_Cycle:
-      -- if Add<=100 then
+   
     
 	 loop
-	  if Add<= 100 then
-	    Producer.Putstart;
 	    Buffer.Retrieve(RetrievedNumber);
 	    Add := Add+RetrievedNumber;
 	    Put_Line(MessageR);
 	    Put_Line(Integer'Image(RetrievedNumber));
 	    Put_Line("Add");
 	    Put_Line(Integer'Image(Add));
-	   end if;
-	    Buffer.Bstop;
-	    Producer.Putstart;
-	    	
-	 
-
-	  --end if; 
+	    exit when Add>100;
+	  
 	 end loop Main_Cycle;
+	   Producer.Pstop;
   exception
---   when TASKING_ERROR =>
-     when others =>
+when TASKING_ERROR =>
+    -- when others =>
      Put_Line("Buffer finished before producer");
 	 Put_Line("Ending the consumer");
 
