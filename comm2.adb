@@ -26,9 +26,7 @@ procedure comm2 is
     end buffer;
 
     task producer is
-       entry PPstart;
       entry Pstop;
-        -- add task entries
     end producer;
  
     task consumer is
@@ -62,28 +60,28 @@ procedure comm2 is
           use Random_Int;
           G : Generator;
           N: Integer;
-	  StopP: Boolean :=True ;
+	  StopP: Boolean :=False ;
                 -- change/add your local declarations here
     begin
 
        Put_Line(Message);
      
         loop
-	   select
-            accept PPstart do
             Reset(G);
             N := Random(G);
             Buffer.PutIn(N);
             Put_Line(MessageP);
             Put_Line(Integer'Image(N));
-	    end PPstart;
-	   or 
-	      accept Pstop do
-		 StopP:=False;
-		
-	      end Pstop;
-	   end select;
-	   exit when not StopP;
+            select 
+               accept Pstop do
+                Stopp := True;
+	          end Pstop;
+	        or
+	           delay 1.0;
+	    
+	          end select;
+	       	exit when StopP;
+	 
         end loop;
       
        
@@ -103,8 +101,7 @@ procedure comm2 is
         Put_Line(Message);
         Main_Cycle:
             loop
-	   if Add<= 100 then
-	    Producer.PPstart;
+	        if Add<= 100 then
             buffer.Retrieve(RetrievedNumber);
             Add := Add+RetrievedNumber;
 	     Put_Line("Add");
@@ -125,4 +122,3 @@ procedure comm2 is
 begin
 Put_Line(Message);
 end comm2;
-
